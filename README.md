@@ -61,7 +61,7 @@ LazyScript.load('C', function(global){
 
 
 
-###4. 预加载
+### 4. 预加载
 
 ```javascript
 /**
@@ -163,7 +163,7 @@ var js = LazyScript.noConflict()
 
 
 
-###2. resolve
+### 2. resolve
 
 ```javascript
 // 解析字符串为路径, 测试用
