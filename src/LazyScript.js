@@ -1,5 +1,5 @@
 /**
- * LazyScript.js 0.2.0
+ * LazyScript.js 0.1.0
  * 部分参考 Sea.js 3.0.3
  * 
  * 功能: 按需加载 JavaScript (非模块)
