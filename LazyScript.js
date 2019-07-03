@@ -1,14 +1,16 @@
 /**
- * LazyScript.js 0.1.1
+ * LazyScript.js v0.2.0
  * 部分参考 Sea.js 3.0.3
+ * LazyScript.js **不是**模块解决方案!
  * 
- * 功能: 按需加载 JavaScript (非模块)
+ * 功能: 按需加载 JavaScript (正经的 js, 不能是模块定义文件)
  * 
  * 流程描述:
- * 使用 ls.load 开始加载;
- * ls.load 的参数(字符串或函数)被转换为 Script 对象, 称为 "子任务";
- * 如果 ls.load 所在脚本不是其他 ls.load 的子任务, 则立即开始自身子任务的加载;
- * 否则, 等待所在子任务完成, 然后开始自身子任务的加载;
+ * 使用 LazyScript.load 开始加载;
+ * LazyScript.load 的参数 (字符串或函数) 被转换为 ScriptTask 对象, 称为"脚本任务", 其对应的 js 代码称为"任务脚本";
+ * 如果 LazyScript.load 的宿主 (LazyScript.load 所在的 js) 是一个任务脚本, 且存在对应的 script 节点, 
+ * 则将脚本任务传给宿主 (称为宿主的"二级脚本任务"), 宿主会在自身代码执行完毕时, 统一执行所有二级脚本任务;
+ * 否则, 立即执行这些脚本任务;
  */
 (function(global, undefined) {
 
@@ -29,11 +31,6 @@
   var isString = isType("String");
   var isFunction = isType("Function");
   var isArray = Array.isArray || isType("Array");
-
-  // 属性检测
-  function hasOwn(obj, key) {
-    return Object.prototype.hasOwnProperty.call(obj, key);
-  }
 
   // 数组降维
   function flatten(arr1) {
@@ -208,48 +205,48 @@
     return realpath(id);
   }
 
-  // 缓存已生成的 Script
-  var _cachedScripts = Object.create(null);
+  // 缓存已生成的 ScriptTask
+  var _cachedTasks = Object.create(null);
 
-  // 记录当前正在加载的 script
+  // 记录当前正在加载的 scriptNode
   var _loadingScriptNodes = [];
   
   var STATUS = {
     // 1 - 加载任务开始, 正在加载 script 标签
     LOADING: 1,
-    // 2 - script 标签加载完成, 等待子任务完成 (子任务是指 script 标签执行时生成的任务)
+    // 2 - script 标签加载完成, 等待二级任务完成 (二级任务是指 script 标签执行时生成的 ScriptTask)
     LOADED: 2,
-    // 100 - 二级加载任务全部完成
+    // 100 - 二级任务全部完成
     READY: 100,
     // 404
     ERROR: 404,
   };
 
   /**
-   * Script 对象构造函数
+   * ScriptTask 对象构造函数
    * @param {string/function} src 
    * @param {string} type 
    */
-  function Script(src, type) {
+  function ScriptTask(src, type) {
     // 事件
     this.events = Object.create(null);
 
     // 已触发的事件
     this.emitted = Object.create(null);
 
-    // Script 源, 字符串或函数
+    // 任务脚本, 或指向任务脚本的 url
     this.src = src;
 
-    // Script 类型, 'FILE', 'POLYFILL', 'FUNCTION' 之一
+    // ScriptTask 类型, 'FILE', 'POLYFILL', 'FUNCTION' 之一
     this.type = type;
 
-    // 子任务
-    this.scripts = [];
+    // 二级任务
+    this.tasks = [];
 
-    // 未完成子任务数
-    this.scriptsRemain = 0;
+    // 未完成的二级任务数
+    this.tasksRemain = 0;
 
-    // 未完成依赖数
+    // 未完成依赖任务数
     this.depsRemain = 0;
 
     // 状态
@@ -265,8 +262,8 @@
     });
   }
 
-  Script.prototype = {
-    constructor: Script,
+  ScriptTask.prototype = {
+    constructor: ScriptTask,
 
     // 添加一次性回调, 且当事件已触发时, 直接执行回调
     once: function(event, callback) {
@@ -301,7 +298,7 @@
     },
 
     // 添加一个或多个依赖
-    // 只有函数类 Script 才有依赖
+    // 只有 FUNCTION 类型的 ScriptTask 才可能有依赖
     addDependence: function() {
       var deps = flatten([].slice.call(arguments));
       this.depsRemain += deps.length;
@@ -315,15 +312,15 @@
       return this;
     },
 
-    // 添加子任务 (脚本执行中生成的 Script)
-    // 只有文件类 Script 才有依赖
-    addScripts: function(scripts) {
-      this.scripts = this.scripts.concat(scripts);
-      this.scriptsRemain += scripts.length;
+    // 添加二级任务
+    // 只有 FILE 类型的 ScriptTask 才可能有二级任务
+    addTasks: function(tasks) {
+      this.tasks = this.tasks.concat(tasks);
+      this.tasksRemain += tasks.length;
       var _self = this;
-      for(var i = 0, len = scripts.length; i < len; i++) {
-        scripts[i].once('ready', function(){
-          _self.scriptsRemain--;
+      for(var i = 0, len = tasks.length; i < len; i++) {
+        tasks[i].once('ready', function(){
+          _self.tasksRemain--;
           _self.checkReady();
         }).once('error', function() {
           _self.emit('error');
@@ -333,11 +330,11 @@
     },
 
     // 添加代理
-    // 只有 Polyfill 类 Script 才有代理
-    addProxy: function(script) {
+    // 只有 POLYFILL 类型的 ScriptTask 才有代理
+    addProxy: function(task) {
       var _self = this;
-      _self.status = script.status;
-      script.once('ready', function() {
+      _self.status = task.status;
+      task.once('ready', function() {
         _self.emit('ready');
       }).once('error', function() {
         _self.emit('error');
@@ -348,7 +345,7 @@
     },
 
     // 检查是否加载完毕
-    // 仅用于函数类 Script
+    // 仅用于 FUNCTION 类型的 ScriptTask
     checkLoad: function() {
       if (this.status === STATUS.LOADING && !this.depsRemain) {
         this.emit('load');
@@ -356,22 +353,22 @@
       return this;
     },
 
-    // 检查子任务是否全部完成
-    // 仅用于文件类 Script
+    // 检查二级任务是否全部完成
+    // 仅用于 FILE 类型的 ScriptTask
     checkReady: function() {
-      if (this.status === STATUS.LOADED && !this.scriptsRemain) {
+      if (this.status === STATUS.LOADED && !this.tasksRemain) {
         this.emit('ready');
       }
       return this;
     },
 
-    // 加载 script 标签
+    // 加载任务脚本
     load: function() {
-      var script = this;
-      script.status = STATUS.LOADING;
+      var task = this;
+      task.status = STATUS.LOADING;
       
-      if (script.type === 'FUNCTION') {
-        script.checkLoad();
+      if (task.type === 'FUNCTION') {
+        task.checkLoad();
         return this;
       }
 
@@ -380,7 +377,7 @@
         
       node.charset = 'utf-8';
       node.async = true;
-      node.src = script.src;
+      node.src = task.src;
 
       node.onload = function() { cb(false) };
       node.onerror = function() { cb(true) };
@@ -395,7 +392,7 @@
         var index = _loadingScriptNodes.indexOf(node);
         if (index >= 0) _loadingScriptNodes.splice(index, 1);
         node = null;
-        script.emit(error ? 'error' : 'load');
+        task.emit(error ? 'error' : 'load');
       }
 
       return this;
@@ -413,7 +410,7 @@
           }
           break;
         case 'FILE':
-          if (this.scripts.length) batch(this.scripts);
+          if (this.tasks.length) batch(this.tasks);
           this.checkReady();
           break;
       }
@@ -421,39 +418,39 @@
     },
   };
 
-  // 获取缓存的 Script 或新建 Script
-  function getScript(src) {
-    var script = null;
+  // 新建或获取缓存的 ScriptTask
+  function getScriptTask(src) {
+    var task = null;
     if (isFunction(src)) {
-      script = new Script(src, 'FUNCTION');
+      task = new ScriptTask(src, 'FUNCTION');
     } else if (/^polyfill:/i.test(src)) {
       src = 'POLYFILL:' + src.substring(9).trim();
-      script = _cachedScripts[src] || (_cachedScripts[src] = new Script(src.substring(9), 'POLYFILL'));
+      task = _cachedTasks[src] || (_cachedTasks[src] = new ScriptTask(src.substring(9), 'POLYFILL'));
     } else {
       src = id2Url(src);
-      script = _cachedScripts[src] || (_cachedScripts[src] = new Script(src, 'FILE'));
+      task = _cachedTasks[src] || (_cachedTasks[src] = new ScriptTask(src, 'FILE'));
     }
-    return script;
+    return task;
   }
 
   data.polyfill = function(features) {
     return 'https://polyfill.io/v3/polyfill.min.js?features=' + features.join('%2C');
   };
 
-  // 批量处理 Script
+  // 批量处理 ScriptTask 对象
   // 集中处理的主要目的是合并 polyfill
-  function batch(scripts) {
+  function batch(tasks) {
     var features = [];
-    var polyfill = new Script('', 'FILE');
-    var script, i, len;
-    for (i = 0, len = scripts.length; i < len; i++) {
-      script = scripts[i];
-      if (script.status >= STATUS.LOADING) continue;
-      if (script.type === 'POLYFILL') {
-        script.addProxy(polyfill);
-        features.push(script.src);
+    var polyfill = new ScriptTask('', 'FILE');
+    var task, i, len;
+    for (i = 0, len = tasks.length; i < len; i++) {
+      task = tasks[i];
+      if (task.status >= STATUS.LOADING) continue;
+      if (task.type === 'POLYFILL') {
+        task.addProxy(polyfill);
+        features.push(task.src);
       } else {
-        script.load();
+        task.load();
       }
     }
     if (features.length && isFunction(data.polyfill)) {
@@ -474,11 +471,9 @@
    * }) ==> LazyScript.load('{min}/jquery', '{src}/custom')
    * 
    * 新加 suffix 选项, 用于添加统一的后缀, 后缀位于文件名和 .js 之间;
-   * 
    * 新加 polyfill 回调, 用于自定义 polyfill 加载方式, 参数为 Features 数组
    */
   LazyScript.config = function(configData) {
-  
     for (var key in configData) {
       var curr = configData[key];
       var prev = data[key];
@@ -507,7 +502,7 @@
         data[key] = curr;
       }
     }
-    return LazyScript;
+    return this;
   };
 
   // 解析路径, 用于测试
@@ -515,59 +510,49 @@
   
   // 预加载, 告诉 LazyScript 哪些已手动加载完成
   LazyScript.preload = function() {
-    var script;
     for (var i = 0, len = arguments.length; i < len; i++) {
-      script = getScript(arguments[i]);
-      script.emit('load');
+      getScriptTask(arguments[i]).emit('load');
     }
+    return this;
   };
 
   /**
-   * 主函数, 用于加载 script;
+   * 主函数, 开启 ScriptTask;
    * 
-   * 参数可以是字符串或函数, 也可以将它们组合成数组, 但这样做并没有任何好处
-   * 字符串除了可以使用 sea.js 或 require.js 同款字符串之外, 还添加了对 polyfill.io 的支持
+   * 参数可以是字符串或函数, 也允许将它们组合成数组, 但这样做并不会带来额外的好处;
+   * 字符串除了可以使用 sea.js 或 require.js 同款字符串之外, 还可以使用形如 'polyfill:FeatureName' 
+   * 的字符串, 用来请求 polyfill, 其中 FeatureName 对大小写敏感
    * 
-   * 如:
-   * 'polyfill:Array.prototype.fill' ==> 'https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.fill'
-   * 'polyfill:HTMLPictureElement' ==> 'https://polyfill.io/v3/polyfill.min.js?features=HTMLPictureElement'
-   * 
-   * 如果参数中出现了多个 polyfill, 它们会自动组合, 如:
-   * 'polyfill:Array.prototype.fill', 'polyfill:HTMLPictureElement' ==>
-   * 'https://polyfill.io/v3/polyfill.min.js?features=HTMLPictureElement%2CArray.prototype.fill'
-   * 
-   * Feature ('polyfill:'后面的部分, 如'HTMLPictureElement') 大小写敏感
-   * 
-   * 字符串或函数都会被转换成 Script 对象, 其中, 函数转换成的 Script 对象会对在它之前的 Script 对象形成依赖
+   * 字符串或函数都会被转换成 ScriptTask 对象, 其中函数转换成的 ScriptTask 会对在它之前生成的 ScriptTask 形成依赖
    */
   LazyScript.load = function() {
     var host = null;
     var node = findCurrentScript(_loadingScriptNodes);
-    if (node) host = _cachedScripts[node.src];
+    if (node) host = _cachedTasks[node.src];
 
     var args = flatten([].slice.call(arguments));
-    var scripts = [], script;
+    var tasks = [], task;
     for (var i = 0, len = args.length; i < len; i++) {
-      script = getScript(args[i]);
+      task = getScriptTask(args[i]);
 
-      // 函数转换成的 Script 对象会对在它之前的 Script 对象形成依赖
-      if (script.type === 'FUNCTION') {
-        script.addDependence(scripts);
+      // 函数转换成的 ScriptTask 对象会对在它之前生成的 ScriptTask 形成依赖
+      if (task.type === 'FUNCTION') {
+        task.addDependence(tasks);
       }
-      scripts.push(script);
+      tasks.push(task);
     }
-    if (host) host.addScripts(scripts);
-    else batch(scripts);
+    if (host) host.addTasks(tasks);
+    else batch(tasks);
 
     return this;
   };
 
-  var __ls = global.ls;
+  var _LazyScript = global.LazyScript;
   LazyScript.noConflict = function() {
-    if (__ls) global.ls = __ls;
-    return LazyScript;
+    global.LazyScript = _LazyScript;
+    return this;
   };
 
-  global.ls = LazyScript;
+  global.LazyScript = LazyScript;
 
 })(this || window);

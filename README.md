@@ -1,5 +1,9 @@
 # LazyScript
-按需加载 JavaScript (非模块), 使用环境为**浏览器**. 
+LazyScript.js ***不是*** 模块解决方案!
+
+LazyScript.js 用于按需加载 JavaScript (正经的 js 文件或代码, 不能是模块定义 js) 
+
+使用环境为**浏览器**
 
 部分参考 [sea.js](https://github.com/seajs/seajs)
 
@@ -19,20 +23,20 @@
 
 ```javascript
 /**
- * 1. 允许出现多个 ls.load()
- * 2. 允许 ls.load() 与普通代码混杂
+ * 1. 允许出现多个 LazyScript.load()
+ * 2. 允许 LazyScript.load() 与普通代码混杂
  */
 
 // 不带回调
-ls.load('foo', 'bar')
+LazyScript.load('A', 'B')
 
 // 带回调
-ls.load('jquery', function(global){ /* ... */ })
+LazyScript.load('C', function(global){ /* ... */ })
 
 // 普通代码
 console.log('LazyScript')
 
-// 如果有多个 ls.load 带有回调, 无法保证回调执行顺序与 ls.load 出现顺序一致!
+// 如果有多个 LazyScript.load 带有回调, 无法保证回调执行顺序与 LazyScript.load 出现顺序一致!
 
 ```
 
@@ -41,13 +45,15 @@ console.log('LazyScript')
 ### 3. 串联使用
 
 ```javascript
-/* foo.js */
-ls.load('bar', function(global){ 
+// A 依赖于 B, 而 B 又依赖于 C
+
+/* A.js */
+LazyScript.load('B', function(global){ 
   console.log($.bar) // foobar
 })
 
-/* bar.js */
-ls.load('jquery', function(global){
+/* B.js */
+LazyScript.load('C', function(global){
   $.bar = 'foobar'
 })
 
@@ -63,7 +69,7 @@ ls.load('jquery', function(global){
  * 假设我们将常用的 jquery.js 合并到了 LazyScript.js 中,
  * 为了通知 LazyScript "jquery.js" 已存在, 就需要使用预加载:
  */
-ls.preload('jquery')
+LazyScript.preload('jquery')
 
 ```
 
@@ -76,7 +82,7 @@ ls.preload('jquery')
  * 1. 使用 'polyfill:<FeatureName>' 从 polyfill.io 请求 polyfill
  * 2. 允许同时请求多个
  */
-ls.load('polyfill:Promise', 'polyfill:Map', 'polyfill:Object.is')
+LazyScript.load('polyfill:Promise', 'polyfill:Map', 'polyfill:Object.is')
 
 // 多个 polyfill 参数会被尽力合并成一个请求
 // 比如上面的例子, 三个 Feature 会被合并, 最终的请求如下:
@@ -98,7 +104,7 @@ ls.load('polyfill:Promise', 'polyfill:Map', 'polyfill:Object.is')
 
 ```javascript
 
-ls.config({
+LazyScript.config({
   /**
    * 别名配置仅保留了 sea.js 中的 vars 配置方式,
    * 使用时: ls.load('{min}/jquery', '{src}/custom');
@@ -131,7 +137,7 @@ ls.config({
 ### 2. Polyfill 配置
 
 ```javascript
-ls.config({
+LazyScript.config({
   /**
    * 使用 polyfill 属性自定义 polyfill 获取方式
    * 属性值为函数, 函数的参数为 features 数组, 函数的返回值类型为字符串
@@ -150,8 +156,8 @@ ls.config({
 ### 1. noConflict
 
 ```javascript
-// 使用 ls.noConflict() 转让 ls 使用权
-var LazyScript = ls.noConflict()
+// 使用 LazyScript.noConflict() 转让 LazyScript 使用权
+var js = LazyScript.noConflict()
 
 ```
 
@@ -161,6 +167,6 @@ var LazyScript = ls.noConflict()
 
 ```javascript
 // 解析字符串为路径, 测试用
-ls.resolve('jquery');
+LazyScript.resolve('jquery');
 
 ```
