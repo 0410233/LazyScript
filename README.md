@@ -1,9 +1,9 @@
 # LazyScript
-LazyScript.js ***不是*** 模块解决方案!
+LazyScript.js ***不是*** 模块解决方案! ***不是*** 模块解决方案! ***不是*** 模块解决方案! 重要的事情说三遍.
 
-LazyScript.js 用于按需加载 JavaScript (正经的 js 文件或代码, 不能是模块定义 js) 
+LazyScript.js 用于按需加载 JavaScript ( 正经的 js 文件或代码, 不能是定义模块的 js, 因为 LazyScript.js ***不是*** 模块解决方案! 第四遍 ) 
 
-使用环境为**浏览器**
+使用环境为 **浏览器**
 
 部分参考 [sea.js](https://github.com/seajs/seajs)
 
