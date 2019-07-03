@@ -1,90 +1,166 @@
 # LazyScript
-按需加载 JavaScript (非模块), 部分参考 [sea.js 3.0.3](https://github.com/seajs/seajs)
+按需加载 JavaScript (非模块), 使用环境为**浏览器**. 
 
-`LazyScript.js` 全局生成 `ls` 对象.
-
-流程描述:
-
-- 使用 ls.load 开始加载;
-- ls.load 的参数(字符串或函数)被转换为 Script 对象, 称为 "子任务";
-- 如果 ls.load 所在脚本不是其他 ls.load 的子任务, 则立即开始自身子任务的加载;
-- 否则, 等待所在子任务完成, 然后开始自身子任务的加载;
+部分参考 [sea.js](https://github.com/seajs/seajs)
 
 
 
-## ls.config()
+## 使用
 
-参数配置, 参考 [sea.js](https://github.com/seajs/seajs)
+### 1. 引入
 
-- 仅保留 sea.js 的 vars 配置方式, 取消其他, 如
-
-  ```js
-  LazyScript.config({
-  	vars: {
-      'src': 'src',
-      'min':'src.min',
-    }
-  })
-  // 使用:
-  LazyScript.load('{min}/jquery', '{src}/custom');
-  ```
-
-- 新加 `suffix` 选项, 用于添加统一的后缀, 后缀位于文件名和 .js 之间;
-
-- 新加 `polyfill` 回调, 用于自定义 `polyfill` 加载方式, 参数为 `features` 数组;
+```html
+<script src="path/to/LazyScript.js" id="lazyscript"></script>
+```
 
 
 
-## ls.preload()
+### 2. 基本
 
-手动指定哪些脚本已加载, 如 `ls.preload('jquery')`
+```javascript
+/**
+ * 1. 允许出现多个 ls.load()
+ * 2. 允许 ls.load() 与普通代码混杂
+ */
+
+// 不带回调
+ls.load('foo', 'bar')
+
+// 带回调
+ls.load('jquery', function(global){ /* ... */ })
+
+// 普通代码
+console.log('LazyScript')
+
+// 如果有多个 ls.load 带有回调, 无法保证回调执行顺序与 ls.load 出现顺序一致!
+
+```
 
 
 
-## ls.load()
+### 3. 串联使用
 
-主函数, 用于加载 script;
+```javascript
+/* foo.js */
+ls.load('bar', function(global){ 
+  console.log($.bar) // foobar
+})
 
-- 参数可以是字符串或函数, 也可以将它们组合成数组;
+/* bar.js */
+ls.load('jquery', function(global){
+  $.bar = 'foobar'
+})
 
-- 字符串除了可以使用 sea.js 或 require.js 同款字符串之外, 还添加了对 polyfill.io 的支持, 如:
+```
 
-  ```javascript
-  'polyfill:Array.prototype.fill'
-  /* 转换为 */
-  'https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.fill'
+
+
+###4. 预加载
+
+```javascript
+/**
+ * 预加载用于手动指定哪些 js 已存在;
+ * 假设我们将常用的 jquery.js 合并到了 LazyScript.js 中,
+ * 为了通知 LazyScript "jquery.js" 已存在, 就需要使用预加载:
+ */
+ls.preload('jquery')
+
+```
+
+
+
+### 5. Polyfill
+
+```javascript
+/**
+ * 1. 使用 'polyfill:<FeatureName>' 从 polyfill.io 请求 polyfill
+ * 2. 允许同时请求多个
+ */
+ls.load('polyfill:Promise', 'polyfill:Map', 'polyfill:Object.is')
+
+// 多个 polyfill 参数会被尽力合并成一个请求
+// 比如上面的例子, 三个 Feature 会被合并, 最终的请求如下:
+// https://polyfill.io/v3/polyfill.min.js?features=Promise%2CMap%2CObject.is
+
+// 之所以说"尽力", 是因为只有符合下述条件之一的 Polyfill Feature 才能被合并:
+//  1. 未被请求, 且出现在同一个 ls.load 中;
+//  2. 未被请求, 且出现在同级的 ls.load 中, 且所在 js 文件是通过 ls.load 加载的;
+
+// polyfill 请求方式可通过 ls.config() 修改, 详见 "配置" 部分
+
+```
+
+
+
+## 配置
+
+### 1. 路径解析
+
+```javascript
+
+ls.config({
+  /**
+   * 别名配置仅保留了 sea.js 中的 vars 配置方式,
+   * 使用时: ls.load('{min}/jquery', '{src}/custom');
+   */
+	vars: {
+    'src': 'src',
+    'min': 'src.min',
+  },
   
-  'polyfill:HTMLPictureElement'
-  /* 转换为 */
-  'https://polyfill.io/v3/polyfill.min.js?features=HTMLPictureElement'
-  ```
+  /**
+   * 使用 base 更改基准目录
+   *  - 如果不指定, 则使用入口文件 (LazyScript.js) 所在目录;
+   *  - 如果指定的是相对路径, 则相对的是入口文件所在目录;
+   *  - 如果 ls.load 参数以 '^' 开头, 则忽略 base
+   */
+  base: 'js/src',
+  
+  /**
+   * 使用 suffix 添加后缀
+   *  - 后缀会被添加在文件名与文件后缀名之间;
+   *  - 如果 ls.load 参数以 '$' 或 '#' 结束, 则忽略 suffix
+   */
+  suffix: '.min',
+})
 
-- 如果参数中出现了多个 `polyfill`, 它们会自动组合, 如:
-
-  ```javascript
-  'polyfill:Array.prototype.fill', 'polyfill:HTMLPictureElement'
-  /* 转换为 */
-  'https://polyfill.io/v3/polyfill.min.js?features=HTMLPictureElement%2CArray.prototype.fill'
-  ```
-
-  **Polyfill Feature** (`polyfill:`后面的部分, 如`HTMLPictureElement`) 对大小写敏感
-
-- 字符串或函数都会被转成 Script 对象, 其中, 函数类 Script 会对在它之前的 Script 形成依赖
-
-
-
-## ls.noConflict()
-
-转让 `ls` 使用权
+```
 
 
 
-## ls.resolve()
+### 2. Polyfill 配置
 
-解析字符串为路径, 测试用
+```javascript
+ls.config({
+  /**
+   * 使用 polyfill 属性自定义 polyfill 获取方式
+   * 属性值为函数, 函数的参数为 features 数组, 函数的返回值类型为字符串
+   * 以下为默认值:
+   */
+  polyfill: function(features) {
+    return 'https://polyfill.io/v3/polyfill.min.js?features=' + features.join('%2C');
+  }
+})
+```
 
 
 
-## ls.data
+## 其他
 
-存放设置数据
+### 1. noConflict
+
+```javascript
+// 使用 ls.noConflict() 转让 ls 使用权
+var LazyScript = ls.noConflict()
+
+```
+
+
+
+###2. resolve
+
+```javascript
+// 解析字符串为路径, 测试用
+ls.resolve('jquery');
+
+```
