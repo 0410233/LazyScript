@@ -79,9 +79,9 @@ LazyScript.load('polyfill:Promise', 'polyfill:Map', 'polyfill:Object.is')
 // 比如上面的例子, 三个 Feature 会被合并, 最终的请求如下:
 // https://polyfill.io/v3/polyfill.min.js?features=Promise%2CMap%2CObject.is
 
-// 之所以说"尽力", 是因为只有符合下述条件之一的 Feature 才能被合并:
+// "尽力"的意思是, 只有符合下述条件之一的 Feature 才能被合并:
 //  1. 未被请求, 且属于同一加载任务;
-//  2. 未被请求, 且分属同级加载任务, 且所在 js 是目标文件 (通过加载任务加载的 js 文件);
+//  2. 未被请求, 且分属同级加载任务, 且所在 js 是目标文件 (即通过 LazyScript.load 加载的 js 文件);
 
 // polyfill 获取方式可通过 LazyScript.config() 修改, 详见 "配置" 部分
 
