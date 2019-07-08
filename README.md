@@ -30,13 +30,14 @@ LazyScript.js 用于按需加载 JavaScript ( 正经的 js 文件或代码, 不�
 // 加载 a.js 和 b.js, 不带回调
 LazyScript.load('a', 'b')
 
-// 带回调
-LazyScript.load('a', 'b', function(global){ /* ... */ })
+// 加载 c 和 d, 带回调
+LazyScript.load('c', 'd', function(global){ /* ... */ })
 
 // 普通代码
 console.log('LazyScript')
 
-// 如果有多个 LazyScript.load 带有回调, 无法保证回调执行顺序与 LazyScript.load 出现顺序一致!
+// 注意: LazyScript.load 是并行的! 也就是说, 上面的 a, b, c, d 是同时加载的, 其完成顺序仅取决于本身的大小和加载速度;
+//  - 同样, LazyScript.load 回调的执行次序, 也与它们出现的顺序无关.
 
 ```
 
