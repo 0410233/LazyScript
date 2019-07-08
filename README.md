@@ -20,7 +20,7 @@ LazyScript.js 用于按需加载 JavaScript ( 模块定义文件需要先编译 
 
 ```javascript
 /**
- * 1. 使用 LazyScript.load (以下称为"加载任务") 开始加载 js 文件(以下称为"目标文件")或 js 代码(回调函数)
+ * 1. 使用 LazyScript.load (代号"加载任务") 开始加载 js 文件(代号"目标文件")或 js 代码(代号"回调函数")
  * 2. 允许出现多个加载任务
  * 3. 允许加载任务与普通代码混杂
  */
@@ -29,7 +29,7 @@ LazyScript.js 用于按需加载 JavaScript ( 模块定义文件需要先编译 
 LazyScript.load('a', 'b')
 
 // 加载 c.js 和 d.js, 然后执行回调
-LazyScript.load('c', 'd', function callback(global){ /* ... */ })
+LazyScript.load('c', 'd', function(global){ /* ... */ })
 
 // 普通代码
 console.log('LazyScript')
@@ -41,8 +41,8 @@ console.log('LazyScript')
 //   - 所以, a, b, c, d 四个文件将同时开始加载.
 //     
 //  2. 回调函数依赖于同一加载任务中先于它出现的目标文件
-//   - 仍以上面代码为例, 函数 callback 会在 c 和 d 都加载完成后执行, 
-//   - 如果任意一个加载失败, callback 都不会执行.
+//   - 以上面第二个加载任务为例, 回调函数会在 c 和 d 都加载完成后执行, 
+//   - 如果 c 或 d 任意一个加载失败, 回调都不会执行.
 
 ```
 
@@ -95,8 +95,8 @@ LazyScript.load('polyfill:Promise', 'polyfill:Map', 'polyfill:Object.is')
 // https://polyfill.io/v3/polyfill.min.js?features=Promise%2CMap%2CObject.is
 
 // 之所以说"尽力", 是因为只有符合下述条件之一的 Feature 才能被合并:
-//  1. 未被请求, 且属于同一个加载任务;
-//  2. 未被请求, 且分属于同级的加载任务, 且所在 js 是目标文件 (通过加载任务加载的);
+//  1. 未被请求, 且属于同一加载任务;
+//  2. 未被请求, 且分属同级加载任务, 且所在 js 是目标文件 (通过加载任务加载的 js 文件);
 
 // polyfill 获取方式可通过 LazyScript.config() 修改, 详见 "配置" 部分
 
@@ -146,13 +146,14 @@ LazyScript.config({
 LazyScript.config({
   /**
    * 使用 polyfill 属性自定义 polyfill 获取方式
-   * 属性值为函数, 函数参数为 features 数组, 函数返回值类型为字符串
+   * 属性值为函数, 函数参数为 features 数组, 函数返回一个URL
    * 参考以下默认值:
    */
   polyfill: function(features) {
     return 'https://polyfill.io/v3/polyfill.min.js?features=' + features.join('%2C');
   }
 })
+
 ```
 
 
