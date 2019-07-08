@@ -1,5 +1,5 @@
 # LazyScript
-路径解析及全局设置部分有参考 [sea.js](https://github.com/seajs/seajs)
+路径解析及全局设置部分参考自 [sea.js](https://github.com/seajs/seajs)
 
 **LazyScript.js *不是* 模块解决方案!**
 
