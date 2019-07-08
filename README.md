@@ -27,11 +27,11 @@ LazyScript.js 用于按需加载 JavaScript ( 正经的 js 文件或代码, 不�
  * 2. 允许 LazyScript.load() 与普通代码混杂
  */
 
-// 不带回调
-LazyScript.load('A', 'B')
+// 加载 a.js 和 b.js, 不带回调
+LazyScript.load('a', 'b')
 
 // 带回调
-LazyScript.load('A', 'B', function(global){ /* ... */ })
+LazyScript.load('a', 'b', function(global){ /* ... */ })
 
 // 普通代码
 console.log('LazyScript')
@@ -45,15 +45,15 @@ console.log('LazyScript')
 ### 3. 串联使用
 
 ```javascript
-// A 依赖于 B, 而 B 又依赖于 C
+// a.js 依赖于 b.js, 而 b.js 又依赖于 c.js
 
-/* A.js */
-LazyScript.load('B', function(global){ 
+/* a.js */
+LazyScript.load('b', function(global){ 
   console.log($.bar) // foobar
 })
 
-/* B.js */
-LazyScript.load('C', function(global){
+/* b.js */
+LazyScript.load('c', function(global){
   $.bar = 'foobar'
 })
 
