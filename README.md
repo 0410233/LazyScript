@@ -49,12 +49,12 @@ console.log('LazyScript')
 
 /* a.js */
 LazyScript.load('b', function(global){ 
-  console.log($.bar) // foobar
+  console.log(global.bar) // foobar
 })
 
 /* b.js */
 LazyScript.load('c', function(global){
-  $.bar = 'foobar'
+  global.bar = 'foobar'
 })
 
 ```
