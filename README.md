@@ -18,7 +18,7 @@ LazyScript.js 用于按需加载 JavaScript ( 模块定义文件需要先编译 
 
 ### 2. 基本
 
-```
+```javascript
 /**
  * 1. 使用 LazyScript.load (以下称为"加载任务") 开始加载代码(以下称为"目标文件")
  * 2. 允许出现多个加载任务
