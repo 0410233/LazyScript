@@ -45,7 +45,7 @@ console.log('LazyScript')
 ### 3. 串联使用
 
 ```javascript
-// a.js 依赖于 b.js, 而 b.js 又依赖于 c.js
+// 假设 a 依赖于 b, 而 b 又依赖于 c
 
 /* a.js */
 LazyScript.load('b', function(global){ 
