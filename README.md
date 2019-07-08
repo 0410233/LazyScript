@@ -20,7 +20,7 @@ LazyScript.js 用于按需加载 JavaScript ( 模块定义文件需要先编译 
 
 ```javascript
 /**
- * 1. 使用 LazyScript.load (以下称为"加载任务") 开始加载代码(以下称为"目标文件")
+ * 1. 使用 LazyScript.load (以下称为"加载任务") 开始加载 js 文件(以下称为"目标文件")或 js 代码(回调函数)
  * 2. 允许出现多个加载任务
  * 3. 允许加载任务与普通代码混杂
  */
@@ -28,15 +28,18 @@ LazyScript.js 用于按需加载 JavaScript ( 模块定义文件需要先编译 
 // 加载 a.js 和 b.js
 LazyScript.load('a', 'b')
 
-// 加载 c.js 和 d.js, 带回调
-LazyScript.load('c', 'd', function(global){ /* ... */ })
+// 加载 c.js 和 d.js, 然后执行回调
+LazyScript.load('c', 'd', function callback(global){ /* ... */ })
 
 // 普通代码
 console.log('LazyScript')
 
-// 注意: 目标文件是并行加载的, 包括同一加载任务的不同目标文件, 以及同级加载任务的不同目标文件! 
-// 以上面代码为例, a.js 和 b.js 将同时开始加载, 除此之外, c.js 和 d.js 也将同时开始加载(与 a.js 和 b.js 一起)!
-// 所以, 同级加载任务的完成顺序取决于各自目标文件的加载速度.
+// 注意: 
+//  1. 目标文件是并行加载的
+//     这包括同一加载任务的不同目标文件, 以及同级加载任务的不同目标文件! 以上面代码为例, a, b, c, d 分属于两个不同的加载任务,
+//     但这两个任务是同级的, 所以四个文件将同时开始加载.
+//  2. 回调函数依赖于同一加载任务中先于它出现的目标文件
+//     仍以上面代码为例, 函数 callback 会在 c 和 d 都加载完成后执行, 如果任意一个加载失败, callback 都不会执行.
 
 ```
 
@@ -89,8 +92,8 @@ LazyScript.load('polyfill:Promise', 'polyfill:Map', 'polyfill:Object.is')
 // https://polyfill.io/v3/polyfill.min.js?features=Promise%2CMap%2CObject.is
 
 // 之所以说"尽力", 是因为只有符合下述条件之一的 Feature 才能被合并:
-//  1. 未被请求, 且出现在同一个 LazyScript.load 中;
-//  2. 未被请求, 且出现在同级的 LazyScript.load 中, 且所在 js (文件) 是通过 LazyScript.load 加载的;
+//  1. 未被请求, 且属于同一个加载任务;
+//  2. 未被请求, 且分属于同级的加载任务, 且所在 js 是目标文件 (通过加载任务加载的);
 
 // polyfill 获取方式可通过 LazyScript.config() 修改, 详见 "配置" 部分
 
