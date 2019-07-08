@@ -66,21 +66,7 @@ LazyScript.load('c', function(global){
 
 
 
-### 4. 预加载
-
-```javascript
-/**
- * 预加载用于手动指定哪些代码已存在;
- * 假设我们将常用的 jquery 合并到了 LazyScript 中,
- * 为了通知 LazyScript 已存在 jquery, 就需要使用预加载:
- */
-LazyScript.preload('jquery')
-
-```
-
-
-
-### 5. Polyfill
+### 4. Polyfill
 
 ```javascript
 /**
@@ -98,6 +84,20 @@ LazyScript.load('polyfill:Promise', 'polyfill:Map', 'polyfill:Object.is')
 //  2. 未被请求, 且分属同级加载任务, 且所在 js 是目标文件 (通过加载任务加载的 js 文件);
 
 // polyfill 获取方式可通过 LazyScript.config() 修改, 详见 "配置" 部分
+
+```
+
+
+
+### 5. 预加载
+
+```javascript
+/**
+ * 预加载用于手动指定哪些代码已存在;
+ * 假设我们将常用的 jquery 合并到了 LazyScript 中,
+ * 为了通知 LazyScript 已存在 jquery, 就需要使用预加载:
+ */
+LazyScript.preload('jquery')
 
 ```
 
