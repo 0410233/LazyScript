@@ -1,12 +1,9 @@
 # LazyScript
-LazyScript.js ***不是*** 模块解决方案!
+路径解析及全局设置部分有参考 [sea.js](https://github.com/seajs/seajs)
 
-LazyScript.js 用于按需加载 JavaScript ( 正经的 js 文件或代码, 不能是定义模块的 js ) 
+**LazyScript.js *不是* 模块解决方案!**
 
-使用环境为 **浏览器**
-
-部分参考 [sea.js](https://github.com/seajs/seajs)
-
+LazyScript.js 用于按需加载 JavaScript ( 模块定义文件需要先编译 ) , 使用环境为 **浏览器**
 
 
 ## 使用
@@ -36,8 +33,9 @@ LazyScript.load('c', 'd', function(global){ /* ... */ })
 // 普通代码
 console.log('LazyScript')
 
-// 注意: LazyScript.load 是并行的! 也就是说, 上面的 a, b, c, d 是同时加载的, 其完成顺序仅取决于本身的大小和加载速度;
-//  - 同样, LazyScript.load 回调的执行次序, 也与它们出现的顺序无关.
+// 注意: LazyScript.load 是并行执行的, 包括内部文件的加载, 甚至同级之间! 
+// 也就是说, 以上面的代码为例, 不但 a.js 和 b.js 将同时开始加载, 甚至 c.js 和 d.js 也将同时开始!
+// 所以同级 LazyScript.load 的完成顺序仅取决于其内部加载文件的多少及各文件的加载速度
 
 ```
 
@@ -46,7 +44,7 @@ console.log('LazyScript')
 ### 3. 串联使用
 
 ```javascript
-// 假设 a 依赖于 b, 而 b 又依赖于 c
+// 假设 a 依赖 b, 而 b 又依赖 c
 
 /* a.js */
 LazyScript.load('b', function(global){ 
@@ -66,7 +64,7 @@ LazyScript.load('c', function(global){
 
 ```javascript
 /**
- * 预加载用于手动指定哪些 js 已存在;
+ * 预加载用于手动指定哪些代码已存在;
  * 假设我们将常用的 jquery 合并到了 LazyScript 中,
  * 为了通知 LazyScript 已存在 jquery, 就需要使用预加载:
  */
@@ -91,7 +89,7 @@ LazyScript.load('polyfill:Promise', 'polyfill:Map', 'polyfill:Object.is')
 
 // 之所以说"尽力", 是因为只有符合下述条件之一的 Feature 才能被合并:
 //  1. 未被请求, 且出现在同一个 LazyScript.load 中;
-//  2. 未被请求, 且出现在同级的 LazyScript.load 中, 且所在 js 文件是通过 LazyScript.load 加载的;
+//  2. 未被请求, 且出现在同级的 LazyScript.load 中, 且所在 js (文件) 是通过 LazyScript.load 加载的;
 
 // polyfill 获取方式可通过 LazyScript.config() 修改, 详见 "配置" 部分
 
