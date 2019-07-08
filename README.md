@@ -3,7 +3,7 @@
 
 **LazyScript.js *不是* 模块解决方案!**
 
-LazyScript.js 用于按需加载 JavaScript ( 模块定义文件需要先编译 ) , 使用环境为 **浏览器**
+LazyScript.js 用于按需加载 js 代码 ( 普通的 js 代码, 如果是模块定义文件, 需要先编译 ), 使用环境为 **浏览器**.
 
 
 ## 使用
