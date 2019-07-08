@@ -18,24 +18,25 @@ LazyScript.js 用于按需加载 JavaScript ( 模块定义文件需要先编译 
 
 ### 2. 基本
 
-```javascript
+```
 /**
- * 1. 允许出现多个 LazyScript.load()
- * 2. 允许 LazyScript.load() 与普通代码混杂
+ * 1. 使用 LazyScript.load (以下称为"加载任务") 开始加载代码(以下称为"目标文件")
+ * 2. 允许出现多个加载任务
+ * 3. 允许加载任务与普通代码混杂
  */
 
-// 加载 a.js 和 b.js, 不带回调
+// 加载 a.js 和 b.js
 LazyScript.load('a', 'b')
 
-// 加载 c 和 d, 带回调
+// 加载 c.js 和 d.js, 带回调
 LazyScript.load('c', 'd', function(global){ /* ... */ })
 
 // 普通代码
 console.log('LazyScript')
 
-// 注意: LazyScript.load 是并行执行的, 包括内部文件的加载, 甚至同级之间! 
-// 也就是说, 以上面的代码为例, 不但 a.js 和 b.js 将同时开始加载, 甚至 c.js 和 d.js 也将同时开始!
-// 所以同级 LazyScript.load 的完成顺序仅取决于其内部加载文件的多少及各文件的加载速度
+// 注意: 目标文件是并行加载的, 包括同一加载任务的不同目标文件, 以及同级加载任务的不同目标文件! 
+// 以上面代码为例, a.js 和 b.js 将同时开始加载, 除此之外, c.js 和 d.js 也将同时开始加载(与 a.js 和 b.js 一起)!
+// 所以, 同级加载任务的完成顺序取决于各自目标文件的加载速度.
 
 ```
 
