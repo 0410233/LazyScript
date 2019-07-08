@@ -1,7 +1,7 @@
 # LazyScript
 *路径解析及全局设置部分参考自 [sea.js](https://github.com/seajs/seajs)*
 
-LazyScript.js 用于按需加载 js (必须是直接可用的 js, 如果是模块定义文件, 需要先编译), 使用环境为 **浏览器**; 支持依赖解析, polyfill加载 (使用 [polyfill.io](https://polyfill.io/)), 任务回调等
+LazyScript.js 用于按需加载 js (必须是直接可用的 js, 如果是模块定义文件, 需要先转换), 使用环境为 **浏览器**, 支持依赖解析, polyfill加载 (使用 [polyfill.io](https://polyfill.io/)), 任务回调等.
 
 **LazyScript.js *不是* 模块解决方案!**
 
