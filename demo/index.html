@@ -10,7 +10,7 @@
   <script>
     LazyScript.config({
       // 当使用 lazyscript.min.js 或 lazyscript.jquery.min.js 时, suffix 默认被设置为 ".min"
-      // 这里因为我们只加载 custom.js, 没有 .min 后缀, 所以设为空值
+      // 这里因为我们只加载 demo.js, 没有 .min 后缀, 所以设为空值
       'suffix': '',
 
       // base 设置被加载文件的根目录. 
@@ -20,10 +20,10 @@
       'base': '../demo/js/'
     });
 
-    // 根据 suffix 的值, "custom" 可能被解析为 "custom.js" 或 "custom.min.js"
+    // 根据 suffix 的值, "demo" 可能被解析为 "demo.js" 或 "demo.min.js"
     // 可以通过添加 ".js" 后缀来取消自动解析, 
-    // 如 "custom.js", 无论 suffix 等于什么, 都会被解析为 "custom.js"
-    LazyScript.load('custom', function(global){
+    // 如 "demo.js", 无论 suffix 等于什么, 都会被解析为 "demo.js"
+    LazyScript.load('demo', function(global){
       console.log('index.html')
     });
   </script>

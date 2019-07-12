@@ -22,4 +22,9 @@ function LazyScriptJquery() {
     .pipe(dest('dist/'));
 }
 
-exports.default = parallel(LazyScript, LazyScriptJquery);
+function customjs() {
+  return src(['src/custom.js'])
+    .pipe(dest('dist/'));
+}
+
+exports.default = parallel(LazyScript, LazyScriptJquery, customjs);
