@@ -426,9 +426,12 @@
     } else if (/^polyfill:/i.test(src)) {
       src = 'POLYFILL:' + src.substring(9).trim();
       task = _cachedTasks[src] || (_cachedTasks[src] = new ScriptTask(src.substring(9), 'POLYFILL'));
+    } else if (_cachedTasks[src]) {
+      task = _cachedTasks[src];
     } else {
-      src = id2Url(src);
-      task = _cachedTasks[src] || (_cachedTasks[src] = new ScriptTask(src, 'FILE'));
+      var url = id2Url(src);
+      task = _cachedTasks[url] || (_cachedTasks[url] = new ScriptTask(url, 'FILE'));
+      _cachedTasks[src] = task;
     }
     return task;
   }
@@ -459,6 +462,7 @@
     }
   }
 
+  data.preload = [];
   /**
    * 配置参数
    * 仅保留 sea.js 的 vars 配置方式, 取消其他
@@ -485,6 +489,14 @@
         }
       }
       else {
+        // 预载
+        if (key === 'preload') {
+          if (isString(curr)) curr = [curr];
+          for (var i = 0, len = curr.length; i < len; i++) {
+            getScriptTask(curr[i]).emit('load');
+          }
+        }
+
         // Concat array config such as map
         if (isArray(prev)) {
           curr = prev.concat(curr);
@@ -508,7 +520,7 @@
   // 解析路径, 用于测试
   LazyScript.resolve = id2Url;
   
-  // 预加载, 告诉 LazyScript 哪些已手动加载完成
+  // 预载, 告诉 LazyScript 哪些插件已加载
   LazyScript.preload = function() {
     for (var i = 0, len = arguments.length; i < len; i++) {
       getScriptTask(arguments[i]).emit('load');

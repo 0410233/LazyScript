@@ -6,18 +6,25 @@
 </head>
 <body>
   <p>(查看控制台输出)</p>
-  <script src="http://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
-  <script src="../LazyScript.js" id="lazyscript"></script>
+  <script src="../dist/lazyscript.jquery.min.js" id="lazyscript"></script>
   <script>
     LazyScript.config({
-      base: 'demo/js',
-      vars: {
-        'jquery': 'http://code.jquery.com/jquery-3.4.1.min.js',
-      }
+      // 当使用 lazyscript.min.js 或 lazyscript.jquery.min.js 时, suffix 默认被设置为 ".min"
+      // 这里因为我们只加载 custom.js, 没有 .min 后缀, 所以设为空值
+      'suffix': '',
+
+      // base 设置被加载文件的根目录. 
+      // 注意: 如果是相对路径, 则 base 的起点是 lazyscript 所在目录!
+      // 比如本 demo 中, 我们加载的 lazyscript.jquery.min.js 所在目录为 '../dist/', 所以 base 的起点就是 '../dist/'.
+      // 因此, 要将 base 设置为 demo 下的 js 文件夹, 就需要像下面这样:
+      'base': '../demo/js/'
     });
-    LazyScript.preload('{jquery}');
+
+    // 根据 suffix 的值, "custom" 可能被解析为 "custom.js" 或 "custom.min.js"
+    // 可以通过添加 ".js" 后缀来取消自动解析, 
+    // 如 "custom.js", 无论 suffix 等于什么, 都会被解析为 "custom.js"
     LazyScript.load('custom', function(global){
-      console.log('Custom in custom.js: ' + custom)
+      console.log('index.html')
     });
   </script>
 </body>
