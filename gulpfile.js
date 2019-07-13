@@ -6,7 +6,7 @@ const inject = require('gulp-inject-string');
 
 function LazyScript() {
   return src(['src/LazyScript.js'])
-  .pipe(rename('lazyscript.js'))
+    .pipe(rename('lazyscript.js'))
     .pipe(dest('dist/'))
     .pipe(inject.append('\nLazyScript.config({"suffix":".min"});\n'))
     .pipe(uglify())
@@ -22,9 +22,9 @@ function LazyScriptJquery() {
     .pipe(dest('dist/'));
 }
 
-function customjs() {
-  return src(['src/custom.js'])
+function mainjs() {
+  return src(['src/main.js'])
     .pipe(dest('dist/'));
 }
 
-exports.default = parallel(LazyScript, LazyScriptJquery, customjs);
+exports.default = parallel(LazyScript, LazyScriptJquery, mainjs);

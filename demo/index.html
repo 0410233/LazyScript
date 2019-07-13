@@ -8,22 +8,19 @@
   <p>(查看控制台输出)</p>
   <script src="../dist/lazyscript.jquery.min.js" id="lazyscript"></script>
   <script>
+    // 使用 LazyScript.config 设置加载参数
     LazyScript.config({
-      // 当使用 lazyscript.min.js 或 lazyscript.jquery.min.js 时, suffix 默认被设置为 ".min"
-      // 这里因为我们只加载 demo.js, 没有 .min 后缀, 所以设为空值
-      'suffix': '',
+      // 指定从哪里加载文件
+      'base': '../demo/js/',
 
-      // base 设置被加载文件的根目录. 
-      // 注意: 如果是相对路径, 则 base 的起点是 lazyscript 所在目录!
-      // 比如本 demo 中, 我们加载的 lazyscript.jquery.min.js 所在目录为 '../dist/', 所以 base 的起点就是 '../dist/'.
-      // 因此, 要将 base 设置为 demo 下的 js 文件夹, 就需要像下面这样:
-      'base': '../demo/js/'
+      // 后缀位于文件名和扩展名之间: 文件名{后缀}.js
+      // 当使用 lazyscript.min.js 或 lazyscript.jquery.min.js 时, 默认值为 ".min"
+      'suffix': '',
     });
 
-    // 根据 suffix 的值, "demo" 可能被解析为 "demo.js" 或 "demo.min.js"
-    // 可以通过添加 ".js" 后缀来取消自动解析, 
-    // 如 "demo.js", 无论 suffix 等于什么, 都会被解析为 "demo.js"
+    // 使用 LazyScript.load 开始加载文件, 回调函数在文件加载后执行
     LazyScript.load('demo', function(global){
+      // 一般情况下: global === this === window
       console.log('index.html')
     });
   </script>

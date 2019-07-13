@@ -92,14 +92,18 @@
   // 忽略 about:xxx 和 blob:xxx
   var IGNORE_LOCATION_RE = /^(about|blob):/;
   // 获取当前工作目录
-  data.cwd = (!location.href || IGNORE_LOCATION_RE.test(location.href)) ? '' : dirname(location.href);
+  var cwd = (!location.href || IGNORE_LOCATION_RE.test(location.href)) ? '' : dirname(location.href);
   
   // 建议给当前 script 添加 id: `lazyscript`
   var thisScript = doc.getElementById("lazyscript") || findCurrentScript(doc.scripts);
-  data.path = thisScript.src;
+  var path = thisScript.src;
 
   // 如果是内嵌使用, 将 base 设为当前工作目录 (cwd, 通常是所在页面的 url)
-  data.base = dirname(thisScript.src || data.cwd);
+  var base = dirname(thisScript.src || cwd);
+
+  data.cwd = cwd;
+  data.path = path;
+  data.base = base;
 
 
   // 路径解析
@@ -175,16 +179,16 @@
     }
     // Relative
     else if (first === 46 /* "." */) {
-      ret = data.cwd + id;
+      ret = cwd + id;
     }
     // Root
     else if (first === 47 /* "/" */) {
-      var m = data.cwd.match(ROOT_DIR_RE);
+      var m = cwd.match(ROOT_DIR_RE);
       ret = m ? m[0] + id.substring(1) : id;
     }
     // Top-level
     else {
-      ret = data.base + id;
+      ret = base + id;
     }
   
     // Add default protocol when url begins with "//"
@@ -516,6 +520,8 @@
     }
     return this;
   };
+
+  LazyScript.config({base:'modules/'});
 
   // 解析路径, 用于测试
   LazyScript.resolve = id2Url;
