@@ -163,9 +163,10 @@ LazyScript.config({
 LazyScript.config({
   /**
    * 预载, 通知 LazyScript 哪些组件已(手动)加载完成, 默认值为空数组;
-   * 当使用 preload 时, 在 LazyScript 内部, 这些组件会被立即创建, 并直接标记为已加载, 
-   * 而任何依赖于或即将依赖于该组件的其他组件都会立刻收到该组件已完成的消息;
    * 当使用 lazyscript.jquery.min.js 时, 默认值为['jquery'];
+   *
+   * 在 LazyScript 内部, 当使用 preload 时, 指定组件会被立即创建, 并直接标记为已完成, 
+   * 而任何依赖于已完成组件的其他组件都会立刻收到该依赖已完成的消息;
    */
   preload: [],
   
