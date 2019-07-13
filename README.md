@@ -1,17 +1,29 @@
 # LazyScript
 *路径解析及全局设置部分参考自 [sea.js](https://github.com/seajs/seajs)*
 
-LazyScriptJS 用于按需加载 js (必须是直接可用的 js, 如果是模块定义文件, 需要先转换), 使用环境为 **浏览器**, 支持依赖解析, polyfill加载 (使用 [polyfill.io](https://polyfill.io/)), 任务回调等.
-
 **LazyScriptJS  *不是* 模块解决方案!**
+
+LazyScriptJS 用于按需加载 js 代码 (下称**组件**).  
+
+**组件**共分三种:
+
+1. 文件组件: 本地 js 文件, cdn 文件链接等
+2. Polyfill 组件: 使用 Polyfill Feature 从 [polyfill.io](https://polyfill.io/) 获取的 polyfill
+3. 函数组件: 匿名函数
+
+无论哪种组件, 都必须是直接可用的 js 代码, 如果是模块定义代码, 或 es6 代码, 需要先转换.
+
+使用环境为 **浏览器**. 支持依赖解析.
+
+
 
 ## 主文件
 
-共有三个主文件:
+主文件是指全局生成 `LazyScript` 对象的 js 文件,  一共有三个:
 
-1. `lazyscript.js` 未压缩版, 默认加载未压缩的 js 文件;
-2. `lazyscript.min.js` 压缩版, 默认加载压缩的 js 文件 (带 `.min.js` 后缀);
-3. `lazyscript.jquery.min.js` 带 `jquery` 压缩版, 默认加载压缩的 js 文件, 且 `LazyScript.data.preload = 'jquery'` ( 详见设置部分 )
+1. `lazyscript.js` 未压缩版, 默认加载未压缩的文件组件;
+2. `lazyscript.min.js` 压缩版, 且默认加载压缩的文件组件 (带 `.min.js` 后缀);
+3. `lazyscript.jquery.min.js` 带 `jquery` 压缩版, 默认加载压缩的文件组件, 且已预载 `jquery` (详见配置部分)
 
 
 
@@ -21,11 +33,14 @@ LazyScriptJS 用于按需加载 js (必须是直接可用的 js, 如果是模块
 ### 1. 引入
 
 ```html
-<script src="path/to/lazyscript.js" id="lazyscript"></script>
+<!-- 推荐: -->
+<script src="path/to/lazyscript.jquery.min.js" id="lazyscript"></script>
+
 <!-- 或 -->
 <script src="path/to/lazyscript.min.js" id="lazyscript"></script>
+
 <!-- 或 -->
-<script src="path/to/lazyscript.jquery.min.js" id="lazyscript"></script>
+<script src="path/to/lazyscript.js" id="lazyscript"></script>
 
 ```
 
@@ -35,16 +50,15 @@ LazyScriptJS 用于按需加载 js (必须是直接可用的 js, 如果是模块
 
 ```javascript
 /**
- * 1. 使用 LazyScript.load (下称"加载任务") 开始加载组件
- *    - 组件共有三种: "文件组件", "函数组件"和"polyfill组件"
- * 2. 允许多个加载任务
- * 3. 允许加载任务与普通代码混杂
+ * 1. 使用 LazyScript.load (下称"加载器") 加载组件
+ * 2. 允许多个加载器
+ * 3. 允许加载器与普通代码混杂
  */
 
 // 加载 a.js 和 b.js
 LazyScript.load('a', 'b')
 
-// 加载 c.js 和 d.js, 然后执行回调(函数组件)
+// 加载 c.js 和 d.js, 然后执行函数
 LazyScript.load('c', 'd', function(global){
   /* ... */ 
 })
@@ -54,13 +68,13 @@ console.log('LazyScript')
 
 // 注意: 
 //  1. 文件组件是并行加载的
-//   - 这包括同一加载任务的不同文件组件, 以及同级加载任务的不同文件组件! 
-//   - 以上面代码为例, a, b, c, d 分属于两个不同的加载任务,
-//   - 但这两个任务是同级的, 所以四个组件会同时开始加载.
+//   - 这包括同一加载器的不同文件组件, 以及同级加载器的不同文件组件! 
+//   - 以上面代码为例, a, b, c, d 分属不同加载器,
+//   - 但这两个加载器是同级的, 所以四个文件会同时开始加载.
 //     
-//  2. 函数组件依赖于同一加载任务中先于它出现的组件(文件或函数或polyfill)
-//   - 以上面第二个加载任务为例, 回调函数会在 c 和 d 都加载完成后执行, 
-//   - 且任意一个加载失败, 回调都不会执行.
+//  2. 函数组件依赖于同一加载器中先于它出现的组件(所有类型)
+//   - 以上面第二个加载器为例, 函数会在 c 和 d 都加载完成后执行, 
+//   - 且任何一个失败, 函数都不会执行.
 
 ```
 
@@ -89,19 +103,19 @@ LazyScript.load('c', function(global){
 
 ```javascript
 /**
- * 使用 'polyfill:<FeatureName>' 从 polyfill.io 请求 polyfill 组件
+ * polyfill 组件形如 "polyfill:FeatureName", 例:
  */
 LazyScript.load('polyfill:Promise', 'polyfill:Map', 'polyfill:Object.is')
 
-// 多个 polyfill 组件会被尽力合并成
-// 比如上面的例子, 三个参数最终会合并为如下请求:
+// 多个 polyfill 组件会被尽力合并
+// 比如上面的例子, 三个组件最终会合并为如下请求:
 // https://polyfill.io/v3/polyfill.min.js?features=Promise%2CMap%2CObject.is
 
-// "尽力"的意思是, 只有符合下述条件之一的 polyfill 组件才能被合并:
-//  1. 未被请求, 且属于同一加载任务;
-//  2. 未被请求, 且分属同级加载任务, 且任务宿主是通过 LazyScript.load 加载的文件组件;
+// "尽力"的意思是, polyfill 组件只有符合下述条件之一才能被合并:
+//  1. 未被请求, 且属于同一加载器;
+//  2. 未被请求, 且分属同级加载器, 且加载器的宿主(所在 js)是一个文件组件;
 
-// polyfill 获取方式可通过 LazyScript.config() 修改, 详见 "配置" 部分
+// polyfill 组件获取方式可通过 LazyScript.config() 修改, 详见 "配置" 部分
 
 ```
 
@@ -126,14 +140,14 @@ LazyScript.config({
   /**
    * 指定从哪里加载文件组件, 默认值为 'modules/'
    *  - 如果指定的是相对路径, 则路径起点是主文件所在目录;
-   *  - 如果组件名以 '^' 开头, 解析时忽略 base
+   *  - 如果组件名以 '^' 开头, 解析时将忽略 base
    */
   base: 'modules/',
   
   /**
    * 后缀位于文件名和扩展名之间, 如: 文件名{后缀}.js, 默认值为空;
    * 当使用 lazyscript.min.js 或 lazyscript.jquery.min.js 时, 默认值为 ".min";
-   * 如果组件名以 '$' 或 '#' 结尾, 解析时忽略 suffix;
+   * 如果组件名以 '.js' 或 '#' 或 '$' 结尾, 解析时将忽略 suffix;
    */
   suffix: '',
   
@@ -148,7 +162,9 @@ LazyScript.config({
 ```javascript
 LazyScript.config({
   /**
-   * 预载, 通知 LazyScript 哪些组件已(手动)加载, 默认值为空数组;
+   * 预载, 通知 LazyScript 哪些组件已(手动)加载完成, 默认值为空数组;
+   * 当使用 preload 时, 在 LazyScript 内部, 这些组件会被立即创建, 并直接标记为已加载, 
+   * 而任何依赖于或即将依赖于该组件的其他组件都会立刻收到该组件已完成的消息;
    * 当使用 lazyscript.jquery.min.js 时, 默认值为['jquery'];
    */
   preload: [],
