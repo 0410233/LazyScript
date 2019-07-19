@@ -1,120 +1,157 @@
-# LazyScript
-*路径解析及全局设置部分参考自 [sea.js](https://github.com/seajs/seajs)*
+# LazyScriptJS
+*路径解析及全局设置部分参考自* [sea.js](https://github.com/seajs/seajs)
 
-**LazyScript  *不是* 模块解决方案!**  LazyScript 用于按需加载 js 组件.  组件必须是直接可用的 js 代码, 如果是模块定义代码, 或 es6 代码, 需要先转换.
+**特别说明**: LazyScript 不是模块解决方案 ! 
 
-**组件**共有三种:
+
+
+## 简介
+
+LazyScriptJS 用于按需加载 js 代码( 代码必须是直接可用的, 如果是模块定义, 或者 es6 代码, 需要先转换, LazyScriptJS 本身没有转换功能 ). 使用环境为 **浏览器**, 支持依赖解析. 
+
+根据来源和处理方式的不同, LazyScriptJS 将待加载的 js 代码( 下文统称 "**组件**" )分为三类:
 
 1. 文件组件: 本地 js 文件, cdn 文件链接等
-2. Polyfill 组件: 使用 Polyfill Feature 从 [polyfill.io](https://polyfill.io/) 获取的 polyfill
-3. 函数组件: 匿名函数
+2. Polyfill 组件: 使用 Polyfill Feature 从 [polyfill.io](https://polyfill.io/) 获取的 polyfill (本质上其实与"文件组件"是相同的, 之所以单独出来是因为处理方式不同: Polyfill 组件支持合并)
+3. 函数组件: 函数
 
-使用环境为 **浏览器**. 支持依赖解析.
+组件使用 `LazyScript.load()` 方法加载, 称为 "**加载**器", 如: `LazyScript.load('jquery')`. 加载器的参数称为 "**组件id**", 如上例的 `'jquery'`.  
 
+根据组件类型的不同, 组件id也分为三种:
 
-
-## 主文件
-
-主文件是指执行 `LazyScript` 主体代码的文件. 它们在全局生成 `LazyScript` 对象.
-
-默认的主文件包括:
-
-1. `dist/lazyscript.js` 未压缩版, 默认加载未压缩的文件组件;
-2. `dist/lazyscript.min.js` 压缩版, 且默认加载压缩的文件组件 (带 `.min.js` 后缀);
-3. `dist/lazyscript.jquery.min.js` 带 `jquery` 压缩版, 默认加载压缩的文件组件, 且已预载 `jquery` ("预载"的解释见"配置"部分)
+1. 文件组件, 组件id为字符串, 如 `'jquery'`,  `'underscore.js'`, `'https://code.jquery.com/jquery-3.4.1.min.js'` 等, 不区分大小写.
+2. Polyfill 组件, 组件id为以 `'polyfill:'` 开头的字符串, 如: `'polyfill:Object.is'`, 冒号后面区分大小写.
+3. 函数组件, 组件id 为函数.
 
 
 
 
 ## 使用
 
-### 1. 引入主文件
+### 1. 引入 LazyScript
 
 ```html
-<!-- 推荐: -->
-<script src="path/to/lazyscript.jquery.min.js" id="lazyscript"></script>
-
-<!-- 或 -->
+<!-- 
+	压缩版: 
+	默认加载压缩的文件组件(带 .min.js 后缀). 推荐!
+-->
 <script src="path/to/lazyscript.min.js" id="lazyscript"></script>
 
-<!-- 或 -->
+<!-- 
+	带 jquery 压缩版: 
+	默认加载压缩的文件组件, 且已预载jquery("预载"的解释见"配置"部分)
+-->
+<script src="path/to/lazyscript.jquery.min.js" id="lazyscript"></script>
+
+<!-- 
+	未压缩版: 
+	默认加载未压缩的文件组件, 推荐开发和测试时使用.
+-->
 <script src="path/to/lazyscript.js" id="lazyscript"></script>
 
 ```
 
 
 
-### 2. 基本
+### 2. 加载文件组件
 
 ```javascript
-/**
- * 1. 使用 LazyScript.load (下称"加载器") 加载组件
- * 2. 允许多个加载器
- * 3. 允许加载器与普通代码混杂
- */
-
-// 加载文件组件 a.js 和 b.js
-LazyScript.load('a', 'b')
-
-// 加载文件组件 c.js 和 d.js, 和函数组件(匿名函数)
-LazyScript.load('c', 'd', function(global){
-  /* 函数组件 */
-})
-
-// 普通代码
-console.log('LazyScript')
-
-// 注意: 
-//  1. 文件组件是并行加载的
-//   - 这包括同一加载器的不同文件组件, 以及同级加载器的不同文件组件! 
-//   - 以上面代码为例, a, b, c, d 分属不同加载器,
-//   - 但这两个加载器是同级的, 所以四个文件会同时开始加载.
-//     
-//  2. 函数组件依赖于同一加载器中先于它出现的组件(所有类型)
-//   - 以上面第二个加载器为例, 函数会在 c 和 d 都加载完成后执行, 
-//   - 且任何一个失败, 函数都不会执行.
+// 加载 a.js
+LazyScript.load('a')
 
 ```
 
 
 
-### 3. 依赖解析
+### 3. 加载 Polyfill 组件
 
 ```javascript
-// 假设 a 依赖 b, b 又依赖 c
+// https://polyfill.io/v3/polyfill.min.js?features=Promise%2CObject.is
+LazyScript.load('polyfill:Promise', 'polyfill:Object.is');
 
-/* a.js */
-LazyScript.load('b', function(global){ 
-  console.log(global.bar) // foobar
-})
-
-/* b.js */
-LazyScript.load('c', function(global){
-  global.bar = 'foobar'
-})
-
-```
-
-
-
-### 4. Polyfill
-
-```javascript
-/**
- * polyfill 组件形如 "polyfill:FeatureName", 例:
- */
-LazyScript.load('polyfill:Promise', 'polyfill:Map', 'polyfill:Object.is')
-
-// 多个 polyfill 组件会被尽力合并
-// 比如上面的例子, 三个组件最终会合并为如下请求:
-// https://polyfill.io/v3/polyfill.min.js?features=Promise%2CMap%2CObject.is
-
-// "尽力"的意思是, 只有符合下述条件之一才能被合并:
+// 多个 polyfill 组件在符合下述条件之一时会被合并:
 //  1. 未被请求, 且属于同一加载器;
 //  2. 未被请求, 且分属同级加载器, 且加载器的宿主(所在 js)是一个文件组件;
 
-// polyfill 组件获取方式可通过 LazyScript.config() 修改, 详见 "配置" 部分
+// polyfill 组件的获取方式可通过 LazyScript.config() 修改, 详见 "配置" 部分
 
+```
+
+
+
+### 4. 加载函数组件
+
+```javascript
+// 加载匿名函数
+LazyScript.load(function(global){
+	// ...
+});
+
+// 加载具名函数
+function foo(){
+  // ...
+}
+LazyScript.load(foo);
+
+```
+
+
+
+### 5. 综合加载
+
+```javascript
+// 允许同一代码中出现多个加载器, 允许加载器和普通代码混杂
+
+// 加载 a.js, b.js
+LazyScript.load('a', 'b');
+
+// 加载 c.js, Promise polyfill, 然后执行函数
+LazyScript.load('c', 'polyfill:Promise', function(global){
+  // ...
+});
+
+console.log(LazyScript);
+
+// 注意: 
+// 1. 文件组件是并行加载的!
+//   - 这包括同一加载器的不同文件组件, 以及同级加载器的不同文件组件! 
+//   - 以上面代码为例: a, b, c 分属两个不同的加载器, 但两个加载器是同级的, 
+//   - 所以三个文件会同时开始加载.
+//     
+// 2. 函数组件依赖于同一加载器中先于它出现的组件(所有类型)
+//   - 以上面第二个加载器为例, 函数会在 c 和 polyfill:Object.is 都加载完成后执行, 
+//   - 且任何一个失败, 函数都不会执行.
+```
+
+
+
+### 6. 依赖解析
+
+假设 a.js 依赖 b.js, b.js 又依赖 c.js
+
+在页面中:
+
+```html
+<script src="path/to/lazyscript.js" id="lazyscript"></script>
+<script>
+	LazyScript.load('a');
+</script>
+```
+
+a.js :
+
+```javascript
+LazyScript.load('b', function(global){ 
+  console.log(global.bar) // foobar
+})
+```
+
+b.js :
+
+```javascript
+LazyScript.load('c', function(global){
+  global.bar = 'foobar'
+})
 ```
 
 
