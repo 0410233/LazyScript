@@ -188,7 +188,7 @@
     }
     // Top-level
     else {
-      ret = base + id;
+      ret = data.base + id;
     }
   
     // Add default protocol when url begins with "//"
