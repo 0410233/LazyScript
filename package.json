@@ -20,6 +20,6 @@
   },
   "dependencies": {
     "gulp-inject-string": "^1.1.2",
-    "jquery": "^3.4.1"
+    "jquery": "^3.5.0"
   }
 }
